@@ -20,30 +20,36 @@ function [xhat, meas] = filterTemplate(calAcc, calGyr, calMag)
 %
 % Note that it is not necessary to provide inputs (calAcc, calGyr, calMag).
 
-  %% Setup necessary infrastructure
+%% Setup necessary infrastructure
   import('com.liu.sensordata.*');  % Used to receive data.
 
+  % Filters used
+  magFilt = true;
+  accFilt = true;
+  
+  
   %% Filter settings
   t0 = [];  % Initial time (initialize on first data received)
   nx = 4;   % Assuming that you use q as state variable.
   % Add your filter settings here.
-  T = 1/100;
+  T = 1/25;
   % Gyroscope covariances
-  sigma_w = 0.01;
+  sigma_w = 1; % was 0.01 
   Rw = diag([sigma_w^2 sigma_w^2 sigma_w^2]);
   sigma_v = 0.0014;
   Rv = diag([sigma_v^2 sigma_v^2 sigma_v^2]);
+  gyr_old = [0; 0; 0];
 
   % Accelerometer parameters and covariances
   g_abs = 9.82;   % 9.8908 from estimate using stationary data.
   g_lim = [0.8 1.2]*g_abs;    % +- 20% marginal
-  sigma_a = 0.03; % From variance estimate using stationary data.
+  sigma_a = 0.3; % From variance estimate using stationary data.
   Ra = diag([sigma_a^2 sigma_a^2 sigma_a^2]);
 
   % Magnetometer parameters and covariances
   m_abs = 39.1103;   % 39.1103 from estimate using stationary data.
-  m_lim = [0.8 1.2]*m_abs;    % +- 20% marginal
-  sigma_m = 0.5; % From variance estimate using stationary data.s
+  m_lim = [0.6 1.4]*m_abs;    % +- 20% marginal
+  sigma_m = 0.9; % From variance estimate using stationary data.s
   Rm = diag([sigma_m^2 sigma_m^2 sigma_m^2]);
   
   
@@ -94,31 +100,44 @@ function [xhat, meas] = filterTemplate(calAcc, calGyr, calMag)
       
       gyr = data(1, 5:7)';
       % Gyroscope 
-      [x, P] = tu_qw(x, P, gyr, T, Rw);
-      % Include normalization of quaternion before using... where?
-      [x, P] = mu_normalizeQ(x, P);
+      if ~any(isnan(gyr))
+          gyr_old = gyr;
+          
+          [x, P] = tu_qw(x, P, gyr, T, Rw);
+          % Include normalization of quaternion before using... where?
+          [x, P] = mu_normalizeQ(x, P);
+      else
+%           [x, P] = tu_qw_pred(x, P, gyr_old, T, Rw);
+%           [x, P] = mu_normalizeQ(x, P);
+      end
+      
+
       
       acc = data(1, 2:4)';
-      if ~any(isnan(acc))  % Acc measurements are available.
-      % Approximate g, skip update if "outlier"
-      a_abs = sqrt(sum(acc.^2));
-          if (a_abs > g_lim(1)) && (a_abs < g_lim(2))
-              g0 = [0; 0; a_abs];
-              [x, P] = mu_g(x, P, acc, Ra, g0);
-              [x, P] = mu_normalizeQ(x, P);
+      if accFilt
+          if ~any(isnan(acc))  % Acc measurements are available.
+          % Approximate g, skip update if "outlier"
+          a_abs = sqrt(sum(acc.^2));
+              if (a_abs > g_lim(1)) && (a_abs < g_lim(2))
+                  g0 = [0; 0; a_abs];
+                  [x, P] = mu_g(x, P, acc, Ra, g0);
+                  [x, P] = mu_normalizeQ(x, P);
+              end
           end
       end
       
       
 
-      mag = data(1, 8:10)'
-      if ~any(isnan(mag))  % Mag measurements are available.
-          % Approximate m, skip update if "outlier"
-          m_abs = sqrt(sum(mag.^2));
-          if (m_abs > m_lim(1)) && (m_abs < m_lim(2))
-              m0 = [0; 9.18; -34.09];
-              [x, P] = mu_m(x, P, mag, Rm, m0);
-              [x, P] = mu_normalizeQ(x, P);
+      mag = data(1, 8:10)';
+      if magFilt
+          if ~any(isnan(mag))  % Mag measurements are available.
+              % Approximate m, skip update if "outlier"
+              m_abs = sqrt(sum(mag.^2));
+              if (m_abs > m_lim(1)) && (m_abs < m_lim(2))
+                  m0 = [0; 12; -36.09]; m0 = m0/norm(m0);
+                  [x, P] = mu_m(x, P, mag, Rm, m0);
+                  [x, P] = mu_normalizeQ(x, P);
+              end
           end
       end
 

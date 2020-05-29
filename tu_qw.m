@@ -1,9 +1,5 @@
 function [x, P] = tu_qw(x, P, omega, T, Rw)
 % EKF time update step
-if any(isnan(omega))
-    x = x;
-    P = P;
-else
     
 % Gyroscope measurement noise covariance (estimated from stationary data)
 sigma_v = 0.0014;
@@ -33,6 +29,5 @@ Pp = F_tilde*P*F_tilde' + G_tilde*Rw*G_tilde';
 
     x = xp + K*(omega - yhat);
     P = Pp - K*S*K';
-end
 
 end
