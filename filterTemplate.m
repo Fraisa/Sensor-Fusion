@@ -107,8 +107,8 @@ function [xhat, meas] = filterTemplate(calAcc, calGyr, calMag)
           % Include normalization of quaternion before using... where?
           [x, P] = mu_normalizeQ(x, P);
       else
-%           [x, P] = tu_qw_pred(x, P, gyr_old, T, Rw);
-%           [x, P] = mu_normalizeQ(x, P);
+%            [x, P] = tu_qw_pred(x, P, gyr_old, T, Rw);
+%            [x, P] = mu_normalizeQ(x, P);
       end
       
 
@@ -178,3 +178,16 @@ function [xhat, meas] = filterTemplate(calAcc, calGyr, calMag)
              'running this function!']);
   end
 end
+
+
+%% "tu_qw"
+% <include>tu_qw.m</include>
+%% "tu_qw_pred"
+% <include>tu_qw_pred.m</include>
+%% "mu_g"
+% <include>mu_g.m</include>
+%% "mu_m"
+% <include>mu_m.m</include>
+%% "Project_Implementation"
+% <include>Project_Implementation.m</include>
+
