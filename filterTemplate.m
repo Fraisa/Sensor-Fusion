@@ -34,7 +34,7 @@ function [xhat, meas] = filterTemplate(calAcc, calGyr, calMag)
   % Add your filter settings here.
   T = 1/25;
   % Gyroscope covariances
-  sigma_w = 1; % was 0.01 
+  sigma_w = 1/10; % was 0.01 
   Rw = diag([sigma_w^2 sigma_w^2 sigma_w^2]);
   sigma_v = 0.0014;
   Rv = diag([sigma_v^2 sigma_v^2 sigma_v^2]);
@@ -101,14 +101,20 @@ function [xhat, meas] = filterTemplate(calAcc, calGyr, calMag)
       gyr = data(1, 5:7)';
       % Gyroscope 
       if ~any(isnan(gyr))
-          gyr_old = gyr;
-          
+          w = gyr;
+          x_tmp = x;
+          P_tmp = P;
           [x, P] = tu_qw(x, P, gyr, T, Rw);
-          % Include normalization of quaternion before using... where?
           [x, P] = mu_normalizeQ(x, P);
+          x_kmin1 = x_tmp;
+          P_kmin1 = P_tmp;
       else
-%            [x, P] = tu_qw_pred(x, P, gyr_old, T, Rw);
-%            [x, P] = mu_normalizeQ(x, P);
+%           x_tmp = x;
+%           P_tmp = P;
+%           [w, x, P] = tu_qw_pred(x, P, x_kmin1, P_kmin1, w, T, Rw);
+%           [x, P] = mu_normalizeQ(x, P);
+%           x_kmin1 = x_tmp;
+%           P_kmin1 = P_tmp;
       end
       
 

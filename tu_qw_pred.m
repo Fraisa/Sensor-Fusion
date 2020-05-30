@@ -1,25 +1,14 @@
-function [x, P] = tu_qw_pred(x, P, omega, T, Rw)
+function [w, x, P] = tu_qw_pred(x, P, x_kmin1, P_kmin1, omega, T, Rw)
 % EKF time update step
-    
-% Gyroscope measurement noise covariance (estimated from stationary data)
-sigma_v = 0.14;
-Rv = diag([sigma_v^2 sigma_v^2 sigma_v^2]);
-
-% Process matrices 
-F = T/2*Somega(omega) + eye(4);
-F_tilde  = F;
-G = T/2*Sq(x);
-G_tilde = G;
 
 % Estimate omega
-xp = F*x;
-H = 2/T*pinv(Sq(x));
+H = 2/T*pinv(Sq(x_kmin1));
 B = -H;
-Bx = B*x;
-omegaHat = H*xp + Bx;
+Bx = B*x_kmin1;
+w = H*x + Bx;
 
 % recalculate Process matrices
-F = T/2*Somega(omegaHat) + eye(4);
+F = T/2*Somega(w) + eye(4);
 F_tilde  = F;
 G = T/2*Sq(x);
 G_tilde = G;
